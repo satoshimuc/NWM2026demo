@@ -1,0 +1,648 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  Menu, X, MapPin, Award, Lightbulb, ShoppingBag, 
+  ChevronRight, Calendar, Camera, Heart, Share2, 
+  User, Users, PlayCircle, CheckCircle, Smartphone, 
+  ArrowRight, Info, Home, ArrowLeft, Clock
+} from 'lucide-react';
+
+/**
+ * MOCK DATA & ASSETS
+ */
+const NEWS_ITEMS = [
+  { id: 1, date: '2024.11.25', tag: 'NEW', title: '大会限定Tシャツ予約開始！', color: 'bg-pink-500' },
+  { id: 2, date: '2024.11.20', tag: 'お知らせ', title: '試走会エントリー受付中', color: 'bg-purple-500' },
+  { id: 3, date: '2024.11.15', tag: 'キャンペーン', title: 'EXPO先行入場券プレゼント', color: 'bg-blue-500' },
+];
+
+const SHOES_DATA = [
+  { id: 1, name: 'FuelCell Rebel v5', price: '11,880円', img: 'shoe1', desc: 'スピードを求めるランナーへ' },
+  { id: 2, name: 'Fresh Foam X 1080', price: '18,700円', img: 'shoe2', desc: '究極のクッション性' },
+  { id: 3, name: 'FuelCell SuperComp', price: '24,200円', img: 'shoe3', desc: '自己ベスト更新を目指す' },
+  { id: 4, name: 'Fresh Foam X 860', price: '16,500円', img: 'shoe4', desc: '安定性とサポート' },
+];
+
+const COURSE_SPOTS = [
+  { id: 1, name: 'ナゴヤドーム (START)', desc: '熱気あふれるスタート地点。', img: '🏟️' },
+  { id: 2, name: '名古屋城', desc: '金シャチが見守る絶景スポット。', img: '🏯' },
+  { id: 3, name: '栄交差点', desc: '名古屋の中心地を駆け抜ける。', img: '🏙️' },
+  { id: 4, name: '大須観音', desc: '下町の活気を感じるエリア。', img: '🏮' },
+  { id: 5, name: 'ナゴヤドーム (GOAL)', desc: 'ティファニーが待つ感動のゴール。', img: '🏁' },
+];
+
+const ADVICE_CONTENT = {
+  weekBefore: { title: '1週間前', text: 'カーボローディングを始めましょう。睡眠時間を確保し、体調を整えることが最優先です。' },
+  dayBefore: { title: '前日', text: '食事は消化の良いものを。準備物は早めにチェックして、リラックスして過ごしましょう。' },
+  morning: { title: '当日朝', text: 'スタート3時間前には起床。朝食はお餅やバナナなどエネルギーになるものを摂取しましょう。' },
+  after: { title: 'レース後', text: 'まずは水分補給とアイシング。頑張った自分を褒めて、ゆっくりお風呂に入りましょう。' },
+};
+
+/**
+ * COMPONENTS
+ */
+
+// UI Components
+const Card = ({ children, className = "" }) => (
+  <div className={`bg-white rounded-2xl shadow-sm overflow-hidden ${className}`}>
+    {children}
+  </div>
+);
+
+const SectionTitle = ({ icon: Icon, title, color = "text-gray-800" }) => (
+  <h2 className={`text-lg font-bold flex items-center gap-2 mb-3 ${color}`}>
+    {Icon && <Icon size={20} className="text-pink-500" />}
+    {title}
+  </h2>
+);
+
+const Badge = ({ children, color = "bg-gray-200 text-gray-700" }) => (
+  <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${color}`}>
+    {children}
+  </span>
+);
+
+// --- Sub-Pages ---
+
+// 1. Stamp Rally View
+const StampRallyView = ({ onBack, progress, setProgress }) => {
+  const tasks = [
+    { id: 'quiz', title: 'ニューバランス検定', icon: Lightbulb, sub: '全3問のクイズに挑戦' },
+    { id: 'tryon', title: '試し履きアンケート', icon: ShoppingBag, sub: 'ぴったりの一足を見つける' },
+    { id: 'video', title: 'SP動画を視聴', icon: PlayCircle, sub: 'モチベーションUP' },
+  ];
+
+  const handleTaskClick = (id) => {
+    if (!progress.includes(id)) {
+      setProgress([...progress, id]);
+      alert("スタンプを獲得しました！");
+    }
+  };
+
+  return (
+    <div className="p-4 space-y-6 pb-24">
+      <div className="flex items-center gap-2 mb-4">
+        <button onClick={onBack} className="p-2 bg-gray-100 rounded-full"><ArrowLeft size={20}/></button>
+        <h2 className="text-xl font-bold text-gray-800">スタンプラリー</h2>
+      </div>
+
+      <Card className="p-6 bg-gradient-to-br from-purple-500 to-pink-500 text-white text-center">
+        <h3 className="text-lg font-bold mb-2">現在の獲得スタンプ</h3>
+        <div className="flex justify-center gap-4 my-4">
+          {tasks.map((task) => (
+            <div key={task.id} className={`w-16 h-16 rounded-full flex items-center justify-center border-4 ${progress.includes(task.id) ? 'bg-white text-pink-500 border-white' : 'bg-transparent border-white/30 text-white/30'}`}>
+              <Award size={32} />
+            </div>
+          ))}
+        </div>
+        <p className="text-sm opacity-90">{progress.length} / 3 コンプリート</p>
+        {progress.length === 3 && (
+          <div className="mt-4 bg-yellow-400 text-yellow-900 py-2 px-4 rounded-full font-bold animate-bounce">
+            🎉 コンプリート特典GET!
+          </div>
+        )}
+      </Card>
+
+      <div className="space-y-4">
+        {tasks.map((task) => (
+          <button 
+            key={task.id}
+            onClick={() => handleTaskClick(task.id)}
+            className="w-full bg-white p-4 rounded-xl shadow-sm flex items-center justify-between group active:scale-95 transition-transform"
+          >
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-full ${progress.includes(task.id) ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}>
+                {progress.includes(task.id) ? <CheckCircle size={24} /> : <task.icon size={24} />}
+              </div>
+              <div className="text-left">
+                <h4 className="font-bold text-gray-800">{task.title}</h4>
+                <p className="text-xs text-gray-500">{task.sub}</p>
+              </div>
+            </div>
+            <ChevronRight className="text-gray-300" />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// 2. Course Guide View
+const CourseView = ({ onBack }) => {
+  return (
+    <div className="p-4 space-y-6 pb-24">
+      <div className="flex items-center gap-2 mb-4">
+        <button onClick={onBack} className="p-2 bg-gray-100 rounded-full"><ArrowLeft size={20}/></button>
+        <h2 className="text-xl font-bold text-gray-800">コース解説</h2>
+      </div>
+      
+      <div className="relative h-48 bg-gray-200 rounded-2xl overflow-hidden mb-6 flex items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10"></div>
+        <span className="text-6xl z-0 opacity-20">🗺️</span>
+        <p className="absolute bottom-4 left-4 text-white font-bold z-20 text-lg">Nagoya Women's 2026 Map</p>
+      </div>
+
+      <div className="space-y-4 relative">
+        <div className="absolute left-4 top-4 bottom-4 w-0.5 bg-pink-200"></div>
+        {COURSE_SPOTS.map((spot, idx) => (
+          <div key={spot.id} className="relative pl-10">
+            <div className="absolute left-2 top-3 w-4 h-4 rounded-full bg-pink-500 border-2 border-white shadow-sm z-10"></div>
+            <Card className="p-4 flex gap-4">
+              <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-3xl flex-shrink-0">
+                {spot.img}
+              </div>
+              <div>
+                <span className="text-xs font-bold text-pink-500">SPOT {idx + 1}</span>
+                <h4 className="font-bold text-gray-800">{spot.name}</h4>
+                <p className="text-sm text-gray-600 mt-1">{spot.desc}</p>
+              </div>
+            </Card>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// 3. Advice View
+const AdviceView = ({ onBack }) => {
+  const [activeTab, setActiveTab] = useState('weekBefore');
+  const tabs = [
+    { id: 'weekBefore', label: '1週間前' },
+    { id: 'dayBefore', label: '前日' },
+    { id: 'morning', label: '当日朝' },
+    { id: 'after', label: 'レース後' },
+  ];
+
+  return (
+    <div className="p-4 pb-24 h-full flex flex-col">
+      <div className="flex items-center gap-2 mb-4">
+        <button onClick={onBack} className="p-2 bg-gray-100 rounded-full"><ArrowLeft size={20}/></button>
+        <h2 className="text-xl font-bold text-gray-800">アンバサダーアドバイス</h2>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-2 mb-4 scrollbar-hide">
+        {tabs.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${
+              activeTab === tab.id 
+                ? 'bg-pink-500 text-white shadow-md' 
+                : 'bg-white text-gray-500 border border-gray-100'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <Card className="p-6 flex-grow bg-gradient-to-b from-white to-pink-50 border border-pink-100">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-12 h-12 rounded-full bg-gray-200 border-2 border-white shadow-md flex items-center justify-center overflow-hidden">
+            <span className="text-2xl">🏃‍♀️</span>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500">Official Ambassador</p>
+            <p className="font-bold text-gray-800">高橋 尚子さん</p>
+          </div>
+        </div>
+        <h3 className="text-xl font-bold text-pink-600 mb-4">{ADVICE_CONTENT[activeTab].title}のアドバイス</h3>
+        <p className="text-gray-700 leading-relaxed text-lg">
+          {ADVICE_CONTENT[activeTab].text}
+        </p>
+      </Card>
+    </div>
+  );
+};
+
+// 4. Shoes Finder (Mini App inside App)
+const ShoeFinder = ({ onBack }) => {
+  const [step, setStep] = useState(0);
+  const [result, setResult] = useState(null);
+
+  const questions = [
+    { q: '今のランニングの目的は？', options: ['楽しく完走', '記録への挑戦', '健康維持'] },
+    { q: '足の着地感の好みは？', options: ['ふわふわ（クッション）', '反発（スピード）', '安定感'] },
+    { q: '月間の走行距離は？', options: ['~50km', '50~100km', '100km~'] },
+  ];
+
+  const handleAnswer = () => {
+    if (step < 2) {
+      setStep(step + 1);
+    } else {
+      setResult(SHOES_DATA[Math.floor(Math.random() * SHOES_DATA.length)]); // Mock logic
+    }
+  };
+
+  return (
+    <div className="p-4 pb-24 h-full flex flex-col items-center justify-center text-center">
+       {!result ? (
+         <>
+          <h2 className="text-2xl font-bold text-gray-800 mb-8">あなたに合うシューズは？</h2>
+          <div className="w-full max-w-sm">
+            <p className="text-pink-500 font-bold mb-4">Q{step + 1}. {questions[step].q}</p>
+            <div className="space-y-3">
+              {questions[step].options.map((opt, i) => (
+                <button 
+                  key={i} 
+                  onClick={handleAnswer}
+                  className="w-full p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:border-pink-500 hover:text-pink-500 transition-all"
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+            <button onClick={onBack} className="mt-8 text-gray-400 text-sm">やめる</button>
+          </div>
+         </>
+       ) : (
+         <div className="animate-fade-in w-full">
+            <h3 className="text-xl font-bold mb-4">あなたへのおすすめ！</h3>
+            <Card className="p-6 max-w-sm mx-auto">
+              <div className="w-full h-40 bg-gray-100 rounded-lg mb-4 flex items-center justify-center text-4xl">👟</div>
+              <h4 className="text-xl font-bold text-gray-800">{result.name}</h4>
+              <p className="text-pink-500 font-bold my-2">{result.price}</p>
+              <p className="text-gray-600 text-sm mb-4">{result.desc}</p>
+              <button className="w-full py-3 bg-black text-white rounded-full font-bold">公式ストアで見る</button>
+            </Card>
+            <button onClick={() => {setResult(null); setStep(0);}} className="mt-6 text-pink-500 font-bold">もう一度診断する</button>
+            <div className="mt-4"><button onClick={onBack} className="text-gray-400">ホームへ戻る</button></div>
+         </div>
+       )}
+    </div>
+  );
+};
+
+// 5. Digital Banner (Supporter Mode)
+const CheerBanner = ({ onBack }) => {
+  const [text, setText] = useState('GO! NAGOYA!');
+  const [isFlashing, setIsFlashing] = useState(false);
+  const colors = ['bg-pink-500', 'bg-purple-600', 'bg-blue-500', 'bg-yellow-400'];
+  const [colorIdx, setColorIdx] = useState(0);
+
+  useEffect(() => {
+    let interval;
+    if (isFlashing) {
+      interval = setInterval(() => {
+        setColorIdx(prev => (prev + 1) % colors.length);
+      }, 500);
+    }
+    return () => clearInterval(interval);
+  }, [isFlashing]);
+
+  return (
+    <div className={`fixed inset-0 z-50 flex flex-col items-center justify-center transition-colors duration-300 ${isFlashing ? colors[colorIdx] : 'bg-white'}`}>
+      <div className="absolute top-4 left-4 z-50">
+        <button onClick={onBack} className="p-2 bg-white/20 backdrop-blur-md rounded-full text-black"><X/></button>
+      </div>
+      
+      {!isFlashing ? (
+        <div className="p-6 w-full max-w-md space-y-6">
+          <h2 className="text-2xl font-bold text-center">デジタル応援幕を作成</h2>
+          <input 
+            type="text" 
+            value={text} 
+            onChange={(e) => setText(e.target.value)}
+            className="w-full p-4 text-2xl font-bold text-center border-2 border-gray-200 rounded-xl focus:border-pink-500 outline-none"
+            placeholder="応援メッセージを入力"
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <button onClick={() => setIsFlashing(true)} className="p-4 bg-pink-500 text-white rounded-xl font-bold shadow-lg hover:bg-pink-600">
+              応援開始！
+            </button>
+          </div>
+          <p className="text-sm text-gray-500 text-center">
+            スマホを横にしてランナーに向けて掲げてください。<br/>画面が点滅して目立ちます！
+          </p>
+        </div>
+      ) : (
+        <div 
+            className="w-full h-full flex items-center justify-center cursor-pointer" 
+            onClick={() => setIsFlashing(false)}
+        >
+          <h1 className="text-6xl md:text-8xl font-black text-white rotate-90 md:rotate-0 whitespace-nowrap drop-shadow-lg">
+            {text}
+          </h1>
+          <p className="absolute bottom-10 text-white/50 animate-pulse">タップして停止</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// 6. Photo Frame (Digital Finisher)
+const PhotoFrame = ({ onBack }) => {
+  const [image, setImage] = useState(null);
+
+  const handleUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => setImage(e.target.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  return (
+    <div className="p-4 pb-24 h-full flex flex-col">
+       <div className="flex items-center gap-2 mb-4">
+        <button onClick={onBack} className="p-2 bg-gray-100 rounded-full"><ArrowLeft size={20}/></button>
+        <h2 className="text-xl font-bold text-gray-800">デジタル完走証</h2>
+      </div>
+
+      {!image ? (
+        <div className="flex-grow flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-2xl bg-gray-50 m-4">
+          <Camera size={48} className="text-gray-300 mb-4" />
+          <p className="text-gray-500 mb-6">ゴール後の写真をアップロード</p>
+          <label className="bg-pink-500 text-white px-6 py-3 rounded-full font-bold shadow-lg cursor-pointer">
+            写真を選択
+            <input type="file" className="hidden" accept="image/*" onChange={handleUpload} />
+          </label>
+        </div>
+      ) : (
+        <div className="relative w-full aspect-[3/4] bg-black rounded-xl overflow-hidden shadow-2xl">
+          <img src={image} alt="User" className="w-full h-full object-cover opacity-80" />
+          {/* Frame Overlay */}
+          <div className="absolute inset-0 pointer-events-none border-[10px] border-pink-500/50 flex flex-col justify-between p-6">
+            <div className="text-right">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/e/ea/New_Balance_logo.svg" alt="NB" className="h-8 ml-auto brightness-200" />
+            </div>
+            <div>
+              <h2 className="text-3xl font-black text-white italic drop-shadow-md">NAGOYA<br/>WOMEN'S<br/>MARATHON<br/>2026</h2>
+              <div className="mt-2 text-white font-bold text-xl drop-shadow-md">FINISHER 42.195km</div>
+            </div>
+          </div>
+          
+          <div className="absolute bottom-4 right-4 flex gap-2">
+            <button className="bg-white text-black px-4 py-2 rounded-full text-sm font-bold shadow-lg flex items-center gap-2">
+              <Share2 size={16}/> シェア
+            </button>
+            <button onClick={() => setImage(null)} className="bg-black/50 text-white px-4 py-2 rounded-full text-sm">
+              やり直す
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- Main Home View ---
+
+const HomeView = ({ setView, userMode, stampProgress }) => {
+  return (
+    <div className="pb-24 space-y-6">
+      {/* Hero Section */}
+      <div className="relative w-full h-56 bg-gray-200 overflow-hidden">
+        {/* Placeholder for Main Visual */}
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-800 to-pink-600 flex items-center justify-center">
+             <div className="text-center text-white px-4">
+                <p className="text-sm font-bold tracking-widest mb-1 opacity-90">見つけよう、あなたの道を。</p>
+                <h1 className="text-3xl font-black italic drop-shadow-lg leading-tight mb-2">
+                  NAGOYA<br/>WOMEN'S MARATHON<br/>2026
+                </h1>
+                <button className="mt-2 bg-white text-pink-600 text-xs font-bold py-1.5 px-4 rounded-full">
+                  CHALLENGE ENTRY CAMPAIGN
+                </button>
+             </div>
+        </div>
+      </div>
+
+      <div className="px-4 -mt-8 relative z-10">
+        {/* Countdown */}
+        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 shadow-lg text-center mb-6 border-b-4 border-pink-400">
+           <p className="text-gray-500 text-xs font-bold mb-1">大会まであと</p>
+           <div className="flex items-baseline justify-center gap-1 text-pink-500">
+             <span className="text-5xl font-black">60</span>
+             <span className="text-lg font-bold">日</span>
+           </div>
+        </div>
+
+        {/* User Mode Specific Content */}
+        {userMode === 'runner' ? (
+          <>
+            {/* 3 Main Buttons */}
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              {[
+                { id: 'stamp', icon: Award, label: 'スタンプ', sub: '特典あり', view: 'stamp' },
+                { id: 'course', icon: MapPin, label: 'コース解説', sub: '5スポット', view: 'course' },
+                { id: 'advice', icon: Lightbulb, label: 'アドバイス', sub: '4テーマ', view: 'advice' }
+              ].map((btn) => (
+                <button 
+                  key={btn.id}
+                  onClick={() => setView(btn.view)}
+                  className="bg-white p-3 rounded-2xl shadow-sm flex flex-col items-center justify-center h-32 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="w-12 h-12 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-500 mb-2">
+                    <btn.icon size={24} />
+                  </div>
+                  <span className="font-bold text-sm text-gray-800">{btn.label}</span>
+                  <Badge color="bg-indigo-100 text-indigo-600 mt-1 text-[10px]">{btn.sub}</Badge>
+                </button>
+              ))}
+            </div>
+
+            {/* Stamp Progress Bar */}
+            <div onClick={() => setView('stamp')} className="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl p-4 text-white mb-8 shadow-md relative overflow-hidden cursor-pointer group">
+              <div className="flex justify-between items-end mb-2 relative z-10">
+                <span className="font-bold text-sm">スタンプラリー進捗</span>
+                <span className="font-black text-2xl">{stampProgress.length}<span className="text-sm font-normal opacity-70">/3</span></span>
+              </div>
+              <div className="w-full bg-black/20 h-2 rounded-full overflow-hidden relative z-10">
+                <div 
+                  className="bg-white h-full rounded-full transition-all duration-1000" 
+                  style={{width: `${(stampProgress.length / 3) * 100}%`}}
+                ></div>
+              </div>
+              <p className="text-xs text-right mt-2 opacity-90 relative z-10">3つコンプリートで特典GET!</p>
+              
+              <Award className="absolute -bottom-4 -right-4 text-white/10 w-32 h-32 group-hover:scale-110 transition-transform" />
+            </div>
+
+            {/* Shoes Section */}
+            <div className="mb-8">
+              <div className="flex justify-between items-center mb-4">
+                <SectionTitle icon={ShoppingBag} title="おすすめのシューズ" />
+                <button 
+                  onClick={() => setView('finder')}
+                  className="text-xs text-pink-500 font-bold flex items-center"
+                >
+                  診断する <ChevronRight size={14}/>
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {SHOES_DATA.slice(0, 4).map((shoe) => (
+                  <div key={shoe.id} className="bg-white p-3 rounded-xl shadow-sm">
+                     <div className="aspect-square bg-gray-100 rounded-lg mb-3 flex items-center justify-center text-4xl">👟</div>
+                     <h4 className="font-bold text-sm text-gray-800 leading-tight mb-1">{shoe.name}</h4>
+                     <p className="text-xs font-bold text-gray-500">{shoe.price}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+             {/* Finisher Certificate Banner */}
+             <div onClick={() => setView('photo')} className="bg-black rounded-xl p-6 text-white text-center mb-8 relative overflow-hidden cursor-pointer">
+                 <div className="relative z-10">
+                    <h3 className="font-bold text-lg mb-1">デジタル完走証</h3>
+                    <p className="text-xs text-gray-400">大会限定フレームで思い出を残そう</p>
+                 </div>
+                 <Camera className="absolute top-1/2 left-4 -translate-y-1/2 text-white/20" size={48} />
+                 <ChevronRight className="absolute top-1/2 right-4 -translate-y-1/2 text-white" />
+             </div>
+          </>
+        ) : (
+          /* SUPPORTER MODE CONTENT */
+          <>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <button 
+                onClick={() => setView('banner')}
+                className="bg-pink-500 text-white p-4 rounded-2xl shadow-lg flex flex-col items-center justify-center h-40"
+              >
+                <Smartphone size={40} className="mb-2" />
+                <span className="font-bold text-lg">デジタル応援幕</span>
+                <span className="text-xs opacity-90 mt-1">スマホを掲げて応援！</span>
+              </button>
+              <button 
+                 onClick={() => setView('course')}
+                 className="bg-white p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center h-40"
+              >
+                <MapPin size={40} className="text-indigo-500 mb-2" />
+                <span className="font-bold text-lg text-gray-800">応援ナビ</span>
+                <span className="text-xs text-gray-500 mt-1">ベストスポットを探す</span>
+              </button>
+            </div>
+
+            <Card className="p-4 mb-6">
+              <h3 className="font-bold text-gray-800 mb-2">応援のマナー</h3>
+              <ul className="text-sm text-gray-600 space-y-2 list-disc pl-4">
+                <li>沿道での応援は指定の場所で行いましょう。</li>
+                <li>ランナーの走行を妨げないように注意してください。</li>
+                <li>デジタル応援幕なら声を出さずに想いを届けられます。</li>
+              </ul>
+            </Card>
+          </>
+        )}
+
+        {/* Shop Section */}
+        <div className="mb-8">
+           <SectionTitle icon={MapPin} title="公式ショップ" />
+           <div className="bg-gray-900 rounded-xl overflow-hidden shadow-lg text-white">
+              <div className="h-32 bg-gray-800 flex items-center justify-center">
+                 <span className="text-gray-600">Store Image</span>
+              </div>
+              <div className="p-4">
+                 <h3 className="font-bold mb-1">New Balance 名古屋店</h3>
+                 <p className="text-xs opacity-70 mb-2 flex items-center gap-1"><MapPin size={12}/> 名古屋市中区栄3-3-1 マルエイガレリア2F</p>
+                 <p className="text-xs opacity-70 flex items-center gap-1"><Clock size={12}/> 10:00 - 20:00</p>
+              </div>
+           </div>
+        </div>
+
+        {/* News Section */}
+        <div className="mb-8">
+          <SectionTitle icon={Info} title="最新情報" />
+          <div className="space-y-3">
+            {NEWS_ITEMS.map((news) => (
+              <div key={news.id} className="bg-white p-4 rounded-xl shadow-sm flex gap-4">
+                <div className="w-16 h-16 bg-gray-100 rounded-lg flex-shrink-0"></div>
+                <div>
+                   <div className="flex items-center gap-2 mb-1">
+                      <Badge color={`${news.color} text-white`}>{news.tag}</Badge>
+                      <span className="text-xs text-gray-400">{news.date}</span>
+                   </div>
+                   <p className="font-bold text-sm text-gray-800 line-clamp-2">{news.title}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer Links */}
+        <div className="flex justify-center gap-6 text-gray-400 pb-8">
+            <div className="bg-white p-3 rounded-full shadow-sm"><Share2 size={20}/></div>
+            <div className="bg-white p-3 rounded-full shadow-sm"><User size={20}/></div>
+            <div className="bg-white p-3 rounded-full shadow-sm"><Home size={20}/></div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- Main App Container ---
+
+export default function App() {
+  // Navigation State
+  const [currentView, setCurrentView] = useState('home'); // home, stamp, course, advice, finder, banner, photo
+  
+  // App Data State
+  const [userMode, setUserMode] = useState('runner'); // runner, supporter
+  const [stampProgress, setStampProgress] = useState([]);
+
+  // Mock LINE Header
+  const Header = () => (
+    <div className="bg-white pt-12 pb-3 px-4 flex justify-between items-center sticky top-0 z-40 border-b border-gray-100">
+      <div className="flex items-center gap-2">
+         {currentView !== 'home' ? (
+           <span className="font-bold text-gray-800 truncate">名古屋ウィメンズマラソン</span>
+         ) : (
+           <span className="font-bold text-gray-800 text-lg">LINE Mini App</span>
+         )}
+      </div>
+      <div className="flex items-center gap-3">
+         {/* Mode Switcher */}
+         {currentView === 'home' && (
+           <button 
+             onClick={() => setUserMode(userMode === 'runner' ? 'supporter' : 'runner')}
+             className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+               userMode === 'runner' 
+                 ? 'bg-pink-100 text-pink-600 border border-pink-200' 
+                 : 'bg-indigo-100 text-indigo-600 border border-indigo-200'
+             }`}
+           >
+             {userMode === 'runner' ? <><User size={12}/> Runner</> : <><Users size={12}/> Supporter</>}
+           </button>
+         )}
+         <button className="text-gray-400"><X size={24} /></button>
+      </div>
+    </div>
+  );
+
+  // Router Logic
+  const renderView = () => {
+    switch(currentView) {
+      case 'home':
+        return <HomeView setView={setCurrentView} userMode={userMode} stampProgress={stampProgress} />;
+      case 'stamp':
+        return <StampRallyView onBack={() => setCurrentView('home')} progress={stampProgress} setProgress={setStampProgress} />;
+      case 'course':
+        return <CourseView onBack={() => setCurrentView('home')} />;
+      case 'advice':
+        return <AdviceView onBack={() => setCurrentView('home')} />;
+      case 'finder':
+        return <ShoeFinder onBack={() => setCurrentView('home')} />;
+      case 'banner':
+        return <CheerBanner onBack={() => setCurrentView('home')} />;
+      case 'photo':
+        return <PhotoFrame onBack={() => setCurrentView('home')} />;
+      default:
+        return <HomeView setView={setCurrentView} />;
+    }
+  };
+
+  return (
+    <div className="w-full max-w-md mx-auto bg-gray-50 min-h-screen shadow-2xl overflow-hidden font-sans text-gray-900">
+      <Header />
+      <div className="h-full overflow-y-auto custom-scrollbar">
+        {renderView()}
+      </div>
+      
+      {/* Global Bottom Sheet (Mock for Navigation) */}
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+      `}</style>
+    </div>
+  );
+}
